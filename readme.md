@@ -107,116 +107,118 @@ if __name__ == "__main__":
   <title>Tradutor VTT</title>
   <!-- Bootstrap CDN -->
   // filepath: c:\Users\felip\Developer\vtt-web-service\readme.md
-  # Quick‑Translate — vtt-web-service 🚀
+# Quick‑Translate — vtt-web-service 🚀
 
-Uma pequena aplicação Flask que usa Ollama para traduzir o conteúdo de arquivos `.vtt` (legendagem) de Inglês → Português (pt-BR).
-
-  ---
-
-  ## ✅ O que este repositório contém
-
-  ```
-  vtt-web-service/
-  ├── app.py                # Flask + rota web (formulário de tradução)
-  ├── translate.py          # Chama Ollama para traduzir texto
-  ├── templates/
-  │   └── index.html        # Página principal com formulário
-  ├── requirements.txt
-  └── Dockerfile (opcional)
-  ```
+A small Flask application that uses Ollama to translate the contents of `.vtt` subtitle files between English and Brazilian Portuguese (pt-BR).
 
   ---
 
-  ## 🧰 Pré‑requisitos
+## ✅ What this repository contains
 
-  - Python 3.11+ instalado
-  - Ollama (opcional, se for usar o motor local) — veja sessão abaixo
-  - Docker (opcional, para rodar tudo via docker-compose)
+```
+vtt-web-service/
+├── app.py                # Flask web app (simple translation form)
+├── translate.py          # Calls Ollama and contains VTT-aware translation logic
+├── templates/
+│   └── index.html        # Main UI (form, buttons)
+├── requirements.txt
+├── run.ps1               # PowerShell helper script to create venv and run the app
+├── run.sh                # Bash helper script to create venv and run the app
+└── Dockerfile (optional)
+```
 
   ---
 
-  ## 🚀 Como executar (recomendado: virtualenv)
+## 🧰 Prerequisites
 
-  1. Clone / entre na pasta do projeto
+- Python 3.11+ installed
+- Ollama (optional, if you want to use a local Ollama instance) — see below
+- Docker (optional, to run everything with docker-compose)
 
-  ```bash
-  cd path/to/vtt-web-service
-  ```
+  ---
 
-  2. Crie e ative um ambiente virtual
+## 🚀 How to run (recommended: virtualenv)
 
-  - Windows (PowerShell):
+1. Change into the project folder
 
-  ```powershell
-  python -m venv venv
-  .\venv\Scripts\Activate.ps1
-  # Se houver política restritiva, execute uma vez:
-  Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
-  ```
+```bash
+cd path/to/vtt-web-service
+```
 
-  - WSL / macOS / Linux:
+2. Create and activate a virtual environment
 
-  ```bash
-  python -m venv venv
-  source venv/bin/activate
-  ```
+- Windows (PowerShell):
 
-  3. Instale as dependências
+```powershell
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+# If you have a restrictive execution policy, run once:
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
+```
 
-  ```bash
-  pip install -r requirements.txt
-  ```
+- WSL / macOS / Linux:
 
-  > Observação: se o `pip` instalar pacotes no diretório do usuário e avisar que `flask.exe` foi colocado em `%APPDATA%\Python\...\Scripts` (como aconteceu aqui), prefira usar um `venv` para evitar problemas com PATH.
+```bash
+python -m venv venv
+source venv/bin/activate
+```
 
-  4. Configure o Ollama (se estiver usando localmente)
+3. Install dependencies
 
-  - Inicie o Ollama local (ou use uma instância remota). Se for local e quiser puxar o modelo exemplo:
+```bash
+pip install -r requirements.txt
+```
 
-  ```bash
-  # Exemplo: instalar o modelo llama3 (executar na máquina onde o Ollama roda)
-  ollama pull llama3
-  ```
+Note: If `pip` warns that `flask.exe` was installed into `%APPDATA%\Python\...\Scripts`, prefer using the included `venv` to avoid PATH issues.
 
-  Defina a variável de ambiente para apontar ao host do Ollama (exemplo: PowerShell / WSL):
+4. Configure Ollama (if using a local instance)
 
-  - PowerShell:
+Start Ollama locally (or use a remote instance). To pull the example model:
 
-  ```powershell
-  $env:OLLAMA_HOST = 'http://localhost:11434'
-  ```
+```bash
+# Example: pull the llama3 model on the machine running Ollama
+ollama pull llama3
+```
 
-  - WSL / bash:
+Set the `OLLAMA_HOST` environment variable to the host where Ollama is running (PowerShell / WSL):
 
-  ```bash
-  export OLLAMA_HOST='http://localhost:11434'
-  ```
+- PowerShell:
 
-  5. Executando a aplicação
+```powershell
+$env:OLLAMA_HOST = 'http://localhost:11434'
+```
 
-  - Modo simples (usa o bloco `if __name__ == '__main__'` do `app.py`):
+- WSL / bash:
 
-  ```bash
-  python app.py
-  ```
+```bash
+export OLLAMA_HOST='http://localhost:11434'
+```
 
-  - Ou usando o CLI do Flask (recomendado quando quiser usar `flask run`):
+5. Start the application
 
-  PowerShell:
+- Simple mode (uses `if __name__ == '__main__'` in `app.py`):
 
-  ```powershell
-  $env:FLASK_APP='app.py'
-  python -m flask run --host=0.0.0.0 --port=5000
-  ```
+```bash
+python app.py
+```
 
-  WSL / bash:
+- Or use Flask CLI (recommended for `flask run`):
 
-  ```bash
-  export FLASK_APP=app.py
-  python -m flask run --host=0.0.0.0 --port=5000
-  ```
+PowerShell:
 
-  Abra http://localhost:5000 no navegador e teste.
+```powershell
+$env:FLASK_APP='app.py'
+python -m flask run --host=0.0.0.0 --port=5000
+```
+
+WSL / bash:
+
+```bash
+export FLASK_APP=app.py
+python -m flask run --host=0.0.0.0 --port=5000
+```
+
+Open http://localhost:5000 in your browser and test.
 
 ---
 
@@ -233,54 +235,54 @@ Uma pequena aplicação Flask que usa Ollama para traduzir o conteúdo de arquiv
 
   ---
 
-  ## 🐳 Executando com Docker Compose (Ollama + web)
+## 🐳 Running with Docker Compose (Ollama + web)
 
-  Crie um `docker-compose.yml` (exemplo já no projeto anterior) que inicia o serviço `ollama` e o `web`.
+Create a `docker-compose.yml` (see examples above) that runs an `ollama` service and the `web` service, then:
 
-  ```bash
-  docker compose up --build
-  ```
+```bash
+docker compose up --build
+```
 
-  O serviço web ficará disponível em http://localhost:5000.
-
-  ---
-
-  ## ⚠️ Problemas comuns / Soluções
-
-  - "flask: The term 'flask' is not recognized": isso ocorre quando o executável `flask.exe` (pip) está instalado em `%APPDATA%\Python\...\Scripts` que não está no PATH. Soluções:
-
-    - Use `python -m flask ...` para evitar depender do `flask.exe` no PATH.
-    - Use um `venv` e ative-o (melhor prática).
-    - Adicione a pasta de Scripts ao PATH (apenas se souber o que faz):
-
-      ```powershell
-      $env:PATH += ';C:\Users\USERNAME\AppData\Roaming\Python\Python314\Scripts'
-      # Para persistir, use setx (atenção ao tamanho do PATH):
-      # cmd /c "setx PATH "%PATH%;C:\Users\USERNAME\AppData\Roaming\Python\Python314\Scripts""
-      ```
-
-  - Erros de conexão com Ollama: verifique `OLLAMA_HOST`, se o serviço está em execução e se a porta (11434 por padrão) está aberta.
+The web service will be available at http://localhost:5000.
 
   ---
 
-  ## 💡 Dicas rápidas
+## ⚠️ Common problems / Troubleshooting
 
-  - Trocar o modelo (ex.: usar outro nome em `translate.py`) é possível passando `model='nome_do_modelo'`.
-  - Se quiser retornar o texto traduzido na tela em vez de forçar download, troque `send_file(...)` por:
+- "flask: The term 'flask' is not recognized": this happens when the `flask.exe` created by pip was installed into `%APPDATA%\Python\...\Scripts` which is not in your PATH. Fixes:
 
-  ```python
-  from flask import Response
-  return Response(out_path.read_text(), mimetype='text/plain')
-  ```
+    - Use `python -m flask ...` to avoid relying on `flask.exe` in PATH.
+    - Use a `venv` and activate it (recommended).
+    - Add the Scripts folder to your PATH (only if you know what you're doing):
+
+        ```powershell
+        $env:PATH += ';C:\Users\USERNAME\AppData\Roaming\Python\Python314\Scripts'
+        # To persist, use setx (be careful with PATH length):
+        # cmd /c "setx PATH "%PATH%;C:\Users\USERNAME\AppData\Roaming\Python\Python314\Scripts""
+        ```
+
+- Ollama connection errors: check `OLLAMA_HOST`, make sure the service is running and the port (11434 by default) is open.
 
   ---
 
-  ## Contato / Contribuição
+## 💡 Quick tips
 
-  Abra uma issue ou envie um pull request com melhorias — sugestões para melhorar o README são bem-vindas! ✅
+- To switch model (for example, use another model name in `translate.py`) pass `model='model_name'`.
+- If you prefer to display the translated text in the browser instead of forcing a file download, return the content as a `Response`:
+
+```python
+from flask import Response
+return Response(out_path.read_text(), mimetype='text/plain')
+```
 
   ---
 
-  Boa sorte — se quiser, eu posso também adicionar um script `make run` ou `poetry`/`pipenv` para facilitar os comandos. Quer que eu faça isso agora? ✨
+## Contributing
+
+Open an issue or send a pull request with improvements — suggestions to improve this README and the app are welcome! ✅
+
+---
+
+If you want, I can add helper targets (e.g. a `make run`, or a `poetry`/`pipenv` setup) to make common tasks easier — would you like me to add one of those?
 
 
