@@ -66,7 +66,7 @@
           >{{ request.form.get('text','') }}</textarea>
         </div>
 
-        <div class="col-md-6 mb-3">
+        <div class="col-md-6 col mb-3">
           <label class="form-label">Translation preview</label>
           <div id="preview" class="border rounded bg-light p-3" style="min-height:220px;">
             {% if translated %}
@@ -93,6 +93,7 @@
           <span id="translateSpinner" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true" style="display:none;"></span>
           <span id="translateLabel">Translate</span>
         </button>
+        <span id="detectedBadge" class="ms-3 text-muted small"></span>
       </div>
     </form>
 
@@ -119,13 +120,50 @@
         const translateSpinner = document.getElementById('translateSpinner');
         const translateLabel = document.getElementById('translateLabel');
 
+        // Submissão controlada: detectar idioma antes de enviar
         if(formEl){
-          formEl.addEventListener('submit', function(e){
-            // se já estiver desabilitado, evita re-submissão
+          formEl.addEventListener('submit', async function(e){
+            e.preventDefault();
             if(translateBtn.disabled) return;
             translateBtn.disabled = true;
             translateSpinner.style.display = 'inline-block';
             translateLabel.textContent = 'Traduzindo...';
+
+            const textVal = document.getElementById('text').value || '';
+            // If empty, just submit normally
+            if(!textVal.trim()){
+              formEl.submit();
+              return;
+            }
+
+            try{
+              const resp = await fetch('/detect-language', {
+                method: 'POST', headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({text: textVal})
+              });
+              if(resp.ok){
+                const j = await resp.json();
+                const conf = j.confidence || 0.0;
+                const display = j.display || j.code || 'unknown';
+                detectedBadge.textContent = `Detectado: ${display} (${Math.round(conf*100)}%)`;
+                // auto-apply if confidence >= 0.8
+                if(conf >= 0.80 && j.code){
+                  sourceSelect.value = j.code;
+                }
+              } else {
+                // detection failed; show neutral message
+                const j = await resp.json().catch(()=>null);
+                if(j && j.error){
+                  detectedBadge.textContent = `Detecção: ${j.error}`;
+                }
+              }
+            }catch(err){
+              // ignore detection error and proceed
+              detectedBadge.textContent = 'Detecção indisponível';
+            }
+
+            // submit the form (will trigger server-side translation)
+            formEl.submit();
           });
         }
 
@@ -159,70 +197,25 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
+            // Desktop equal-height + scrollable preview
+            (function(){
+              const style = document.createElement('style');
+              style.textContent = `
+                @media (min-width: 768px) {
+                  .two-col { align-items: stretch; }
+                  .two-col > .col { display:flex; flex-direction:column; }
+                  #text { flex:1 1 auto; min-height:320px; }
+                  #preview { flex:1 1 auto; overflow:auto; max-height:720px; }
+                  #preview .d-flex { margin-bottom:0.5rem; }
+                }
+              `;
+              document.head.appendChild(style);
+            })();
             const tgt = (targetSelect && targetSelect.value) ? targetSelect.value : 'unknown';
             a.download = `translation_${tgt}.vtt`;
             document.body.appendChild(a);
             a.click();
             a.remove();
-            URL.revokeObjectURL(url);
-          });
-        }
-
-        // Persist language selectors in localStorage
-        function persistLangs(){
-          try{
-            localStorage.setItem('vtt_source_lang', sourceSelect.value);
-            localStorage.setItem('vtt_target_lang', targetSelect.value);
-          }catch(e){/* ignore */}
-        }
-        sourceSelect.addEventListener('change', persistLangs);
-        targetSelect.addEventListener('change', persistLangs);
-
-        // Load saved preferences
-        try{
-          const savedSrc = localStorage.getItem('vtt_source_lang');
-          const savedTgt = localStorage.getItem('vtt_target_lang');
-          if(savedSrc){ sourceSelect.value = savedSrc; }
-          if(savedTgt){ targetSelect.value = savedTgt; }
-        }catch(e){/* ignore */}
-
-        // Auto-detect language on paste (will set source select only if no saved preference)
-        const detectedBadge = document.createElement('div');
-        detectedBadge.id = 'detectedBadge';
-        detectedBadge.className = 'small text-muted mt-1';
-        sourceSelect.parentElement.appendChild(detectedBadge);
-
-        document.getElementById('text').addEventListener('paste', function(ev){
-          // read pasted content
-          const clipboardData = (ev.clipboardData || window.clipboardData);
-          const pasted = clipboardData.getData('Text');
-          if(!pasted || pasted.length < 20) return; // too short
-
-          // If user already saved a source preference, do not auto-override; show suggestion instead
-          const hasSaved = !!localStorage.getItem('vtt_source_lang');
-
-          fetch('/detect-language', {
-            method: 'POST', headers: {'Content-Type':'application/json'},
-            body: JSON.stringify({text: pasted})
-          }).then(r => r.json()).then(j => {
-            if(!j.ok) return;
-            const code = j.code;
-            detectedBadge.innerHTML = `Detected: <strong>${j.display}</strong> (${code})` + (hasSaved ? ' — <a href="#" id="useDetected">use</a>' : '');
-            if(!hasSaved){
-              sourceSelect.value = code;
-            } else {
-              const useLink = document.getElementById('useDetected');
-              if(useLink){
-                useLink.addEventListener('click', function(e){
-                  e.preventDefault();
-                  sourceSelect.value = code;
-                  persistLangs();
-                  detectedBadge.textContent = `Detected and set: ${j.display} (${code})`;
-                });
-              }
-            }
-          }).catch(()=>{});
-        });
       });
     </script>
   </body>

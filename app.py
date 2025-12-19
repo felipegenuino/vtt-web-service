@@ -81,10 +81,15 @@ def detect_language():
 
     # lightweight detection (uses langdetect)
     try:
-        from langdetect import detect
-        code = detect(text)
+        from langdetect import detect_langs
+        probs = detect_langs(text)
+        if not probs:
+            raise ValueError('no detection')
+        top = probs[0]
+        code = top.lang
+        confidence = float(top.prob)
     except Exception:
-        return jsonify({'ok': False, 'error': 'detection failed'}), 500
+        return jsonify({'ok': False, 'error': 'detection failed', 'confidence': 0.0}), 500
 
     # Normalize some codes
     mapping = {
@@ -97,7 +102,7 @@ def detect_language():
     name_map = {k: v for k, v in LANGUAGES_TOP + LANGUAGES_OTHER}
     display = name_map.get(code_norm, code_norm)
 
-    return jsonify({'ok': True, 'code': code_norm, 'display': display})
+    return jsonify({'ok': True, 'code': code_norm, 'display': display, 'confidence': confidence})
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
