@@ -28,20 +28,23 @@ app = Flask(__name__)
 @app.route("/", methods=["GET", "POST"])
 def index():
     translated = None          # Valor que será mostrado na tela
-    direction = "en-pt"      # padrão: Inglês -> Português
+    # defaults
+    source_lang = "auto"
+    target_lang = "pt-BR"
 
     if request.method == "POST":
         original = request.form.get("text", "")
-        direction = request.form.get("direction", "en-pt")
+        source_lang = request.form.get("source_lang", source_lang)
+        target_lang = request.form.get("target_lang", target_lang)
 
         if original.strip():
             try:
                 # Se o texto parece um VTT, preserve a estrutura e traduza apenas o conteúdo das legendas
                 if re.search(r"^WEBVTT", original, re.I) or re.search(r"\d{2}:\d{2}:\d{2}\.\d{3}\s+-->\s+\d{2}:\d{2}:\d{2}\.\d{3}", original):
-                    translated = translate_vtt_content(original, direction=direction)
+                    translated = translate_vtt_content(original, direction=f"{source_lang}-{target_lang}")
                 else:
                     # texto simples — traduz e limpa pequenos artefatos
-                    translated = translate_text(original, direction=direction)
+                    translated = translate_text(original, source_lang=source_lang, target_lang=target_lang)
                     translated = translated.replace("```", "").strip()
 
                     # remove prefixos comuns que o modelo às vezes antepõe
